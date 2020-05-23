@@ -45,12 +45,16 @@ app.layout = html.Div(style={'backgroundColor': colors['background'], 'textAlign
     [dash.dependencies.Output('coronavirus_plot_img', 'src'),
      dash.dependencies.Output('t_infectious_slider_value', 'children')],
     [dash.dependencies.Input('t_infectious_slider', 'value')])
-def update_slider_output(value):
+def update_coronavirus_plot(t_inf):
+    # Convert MatPlotLib figure encoded as PNG image. More clunky than using
+    # plotly Graphs but I want to see how well it works as I have many complex
+    # maplotlib visualisations in existing projects which I want to use.
     fig=coronavirus.Plot(data,
-                         area_type='Nation',
-                         t_infectious=value # Days for which a patient is infectious
+                         #area_type='Nation',
+                         area_type='Region',
+                         t_infectious=t_inf # Days for which a patient is infectious
     )
-    return utils.fig_to_uri(fig, tight_layout=True, dpi=64), "Assume people are infectious for {} days".format(value)
+    return utils.fig_to_uri(fig, tight_layout=True, dpi=64), "Assume people are infectious for {} days".format(t_inf)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
