@@ -8,7 +8,9 @@ from dash.dependencies import Input, Output
 import coronavirus
 import utils
 
-app=dash.Dash()
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+app=dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 data=coronavirus.Data('https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv')
 
@@ -16,12 +18,11 @@ colors = {
     'background': 'white',
     'text': 'black'
 }
-app.layout = html.Div(style={'backgroundColor': colors['background'], 'textAlign': 'center'},
+app.layout = html.Div(style={'textAlign': 'center'},
                       children=[
     html.H2(
         children='Coronavirus Statistics',
-        style={'textAlign': 'center', 'color': colors['text']
-        }
+        style={'textAlign': 'center'}
     ),
     html.Label('Statistics for'),
     dcc.Dropdown(id='area_type_dropdown',
