@@ -41,9 +41,9 @@ app.layout = html.Div(style={'backgroundColor': colors['background'], 'textAlign
                  ),
              ]),
     html.Div(style={'padding': '10px'}),
-    html.Div(id='coronavirus_plot_div',
+    dcc.Loading(type='circle', children=[html.Div(id='coronavirus_plot_div',
              children=[html.Img(id='coronavirus_plot_img', src='')]
-    )
+    )])
 ])
 
 @app.callback(
