@@ -3,12 +3,17 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 
 import coronavirus
 import utils
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+nbsp='\u00a0'
+external_stylesheets = [
+    #'https://codepen.io/chriddyp/pen/bWLwgP.css',
+    dbc.themes.BOOTSTRAP,
+]
 
 app=dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -18,34 +23,55 @@ colors = {
     'background': 'white',
     'text': 'black'
 }
-app.layout = html.Div(style={'textAlign': 'center'},
-                      children=[
-    html.H2(
-        children='Coronavirus Statistics',
-        style={'textAlign': 'center'}
-    ),
-    html.Label('Statistics for'),
-    dcc.Dropdown(id='area_type_dropdown',
-                 options=[{'label': t, 'value': t} for t in ['Nation', 'Region']],
-                 value='Nation'),
-    html.Div(style={'padding': '10px'}),
-    html.Label(id='t_infectious_slider_value'),
-    html.Div(style={ 'border': 'solid 1px #cccccc',
-                     'padding': '0.5em',
-                     'border-radius': '4px', 
-    },
-             children=[
-                 dcc.Slider(id='t_infectious_slider',
-                            min=1, max=21, step=1,
-                            marks={1: '1 day', 7: '7 days', 14: '14 days', 21: '21 days'},
-                            value=7,
-                 ),
-             ]),
-    html.Div(style={'padding': '10px'}),
-    dcc.Loading(type='circle', children=[html.Div(id='coronavirus_plot_div',
-             children=[html.Img(id='coronavirus_plot_img', src='')]
-    )])
-])
+
+area_type_tool=html.Div(
+    [
+        html.Label('Statistics for'),
+        dcc.Dropdown(id='area_type_dropdown',
+                     options=[{'label': t, 'value': t} for t in ['Nation', 'Region']],
+                     value='Nation',
+                     clearable=False)
+    ]
+)
+t_inf_tool=html.Div(
+    [
+        html.Label(id='t_infectious_slider_value'),
+        html.Div(style={
+            'border': 'solid 1px #cccccc',
+            'padding': '0.5em',
+            'border-radius': '4px',
+        },
+                 children=[
+                     dcc.Slider(id='t_infectious_slider',
+                                min=1, max=21, step=1,
+                                marks={
+                                    1: '1{}day'.format(nbsp),
+                                    7: '7{}days'.format(nbsp),
+                                    14: '14{}days'.format(nbsp),
+                                    21: '21{}days'.format(nbsp),
+                                },
+                                value=7,
+                     )])
+    ]
+)
+
+body = html.Div(
+    [
+        html.H1('Coronavirus Statistics',
+                style={ 'text-align': 'center' }),
+        dbc.Row([dbc.Col(area_type_tool),
+                 dbc.Col(t_inf_tool)]),
+        html.Div([dcc.Loading(type='circle',
+                              children=[
+                                  html.Div(id='coronavirus_plot_div', children=[html.Img(id='coronavirus_plot_img', src='')]),
+                              ]),
+        ],
+                 style={ 'text-align': 'center' }),
+    ],
+    style={ 'padding': '0.5em' }
+)
+
+app.layout = html.Div([body])
 
 @app.callback(
     [dash.dependencies.Output('coronavirus_plot_img', 'src'),
