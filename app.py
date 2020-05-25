@@ -90,5 +90,5 @@ def update_coronavirus_plot(t_inf, area_type):
     return utils.fig_to_uri(fig, tight_layout=True, dpi=64), "Assume people are infectious for {} days".format(t_inf)
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()
 
