@@ -10,12 +10,6 @@ import coronavirus
 import utils
 
 nbsp='\u00a0'
-external_stylesheets = [
-    #'https://codepen.io/chriddyp/pen/bWLwgP.css',
-    dbc.themes.BOOTSTRAP,
-]
-
-app=dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 data=coronavirus.Data('https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv')
 
@@ -23,6 +17,14 @@ colors = {
     'background': 'white',
     'text': 'black'
 }
+
+external_stylesheets = [
+    #'https://codepen.io/chriddyp/pen/bWLwgP.css',
+    dbc.themes.BOOTSTRAP,
+]
+app=dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server=app.server
+app.title='Covid19 Dash Test App'
 
 area_type_tool=html.Div(
     [
