@@ -3,7 +3,6 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_bootstrap_components as dbc
 import dash_daq as daq
 from dash.dependencies import Input, Output
 
@@ -14,14 +13,14 @@ nbsp='\u00a0'
 
 data=coronavirus.Data('https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv')
 
-colors = {
+colours = {
     'background': 'white',
-    'text': 'black'
+    'text': 'black',
+    'toolbg': '#eeeeff',
 }
 
 external_stylesheets = [
-    #'https://codepen.io/chriddyp/pen/bWLwgP.css',
-    dbc.themes.BOOTSTRAP,
+    'https://codepen.io/chriddyp/pen/bWLwgP.css',
 ]
 app=dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server=app.server
@@ -34,60 +33,58 @@ area_type_tool=html.Div(
                      options=[{'label': t, 'value': t} for t in ['Nation', 'Region']],
                      value='Nation',
                      clearable=False)
-    ]
+    ],
+    className="three columns",
 )
 t_inf_tool=html.Div(
     [
         html.Label(id='t_infectious_slider_value'),
-        html.Div(style={
-            'border': 'solid 1px #cccccc',
-            'padding': '0.5em',
-            'border-radius': '4px',
-        },
-                 children=[
-                     dcc.Slider(id='t_infectious_slider',
-                                min=1, max=21, step=1,
-                                marks={
-                                    1: '1{}day'.format(nbsp),
-                                    7: '7{}days'.format(nbsp),
-                                    14: '14{}days'.format(nbsp),
-                                    21: '21{}days'.format(nbsp),
-                                },
-                                value=7,
-                     )])
-    ]
+        html.Div(
+            [
+                dcc.Slider(id='t_infectious_slider',
+                           min=1, max=21, step=1,
+                           marks={
+                               1: '1{}day'.format(nbsp),
+                               7: '7{}days'.format(nbsp),
+                               14: '14{}days'.format(nbsp),
+                               21: '21{}days'.format(nbsp),
+                           },
+                           value=7,
+                )])
+    ],
+    className="six columns",
 )
 smooth_tool=html.Div(
     [
-        html.Label('Smooth'),
+        html.Label('Smoothing'),
         html.Div([daq.ToggleSwitch(
             id='smooth_toggle',
-            value=False
+            value=False,
+            label=['Off', 'On'],
         )],
-                 style={
-                     'border': 'solid 1px #cccccc',
-                     'padding': '0.5em',
-                     'border-radius': '4px',
-                 },
         ),
-    ]
+    ],
+    className="three columns",
 )
 
 body = html.Div(
     [
-        html.H1('Coronavirus Statistics',
-                style={ 'text-align': 'center' }),
-        dbc.Row([dbc.Col(area_type_tool),
-                 dbc.Col(smooth_tool),
-                 dbc.Col(t_inf_tool)]),
+        html.H1('Coronavirus Statistics'),
+        html.Div([area_type_tool,
+                  smooth_tool,
+                  t_inf_tool,
+        ],
+                 className="row",
+                 style={'background': colours['toolbg'],
+                        'padding': '1em'}),
         html.Div([dcc.Loading(type='circle',
                               children=[
                                   html.Div(id='coronavirus_plot_div', children=[html.Img(id='coronavirus_plot_img', src='')]),
                               ]),
         ],
-                 style={ 'text-align': 'center' }),
+                 className='six columns',
+        ),
     ],
-    style={ 'padding': '0.5em' }
 )
 
 app.layout = html.Div([body])
