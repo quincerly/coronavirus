@@ -21,14 +21,27 @@ class Data:
 
     def listAreas(self, area_type):
         return set(self.area_names[np.where(self.area_types == area_type)])
-
-    def getCurveForArea(self, area_name):
+    def getCurveForArea(self, area_name, smooth=False):
         warea=np.where(self.area_names == area_name)
         date=pd.to_datetime(self.data['Specimen date']).to_numpy()[warea]
-        return {'date': date,
-                'datenum': np.array(list(map(mdates.date2num, date))),
-                'daily': self.data['Daily lab-confirmed cases'].to_numpy()[warea],
-                'cumulative': self.data['Cumulative lab-confirmed cases'].to_numpy()[warea]}
+        datenum=np.array(list(map(mdates.date2num, date)))
+        daily=self.data['Daily lab-confirmed cases'].to_numpy()[warea]
+        cumulative=self.data['Cumulative lab-confirmed cases'].to_numpy()[warea]
+        if smooth:
+            daily=Smooth(datenum, daily, 7)
+            cumulative=Smooth(datenum, cumulative, 7)
+        return {
+            'date': date,
+            'datenum': datenum,
+            'daily': daily,
+            'cumulative': cumulative,
+        }
+
+def Smooth(t, y, w):
+    ys=[]
+    for thist in t:
+        ys.append(y[np.where((t >= thist-w/2) & (t <= thist+w/2))].mean())
+    return np.array(ys)
 
 def NInfectious(curve, t_infectious):
     n_infectious=[]
@@ -36,7 +49,7 @@ def NInfectious(curve, t_infectious):
         n_infectious.append(curve['daily'][np.where((curve['datenum'] >= thisdate-t_infectious) & (curve['datenum'] <= thisdate))].sum())
     return np.array(n_infectious)
 
-def Plot(data, area_type, t_infectious):
+def Plot(data, area_type, t_infectious, smooth):
     size_cm=(21.0, 29.7)
     fig=plt.figure(figsize=(size_cm[0]/2.54, size_cm[1]/2.54))
     #fig=plt.figure()
@@ -52,7 +65,7 @@ def Plot(data, area_type, t_infectious):
     Rax.set_ylabel("R value")
     plt.setp(Rax.get_xticklabels(), rotation=45, ha='right')
     for area in data.listAreas(area_type):
-        curve=data.getCurveForArea(area)
+        curve=data.getCurveForArea(area, smooth=smooth)
         n_infectious=NInfectious(curve, t_infectious)
         R=curve['daily']*t_infectious/n_infectious
         Dax.plot(curve['datenum'], curve['daily'], label=area)

@@ -4,6 +4,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
+import dash_daq as daq
 from dash.dependencies import Input, Output
 
 import coronavirus
@@ -56,12 +57,28 @@ t_inf_tool=html.Div(
                      )])
     ]
 )
+smooth_tool=html.Div(
+    [
+        html.Label('Smooth'),
+        html.Div([daq.ToggleSwitch(
+            id='smooth_toggle',
+            value=False
+        )],
+                 style={
+                     'border': 'solid 1px #cccccc',
+                     'padding': '0.5em',
+                     'border-radius': '4px',
+                 },
+        ),
+    ]
+)
 
 body = html.Div(
     [
         html.H1('Coronavirus Statistics',
                 style={ 'text-align': 'center' }),
         dbc.Row([dbc.Col(area_type_tool),
+                 dbc.Col(smooth_tool),
                  dbc.Col(t_inf_tool)]),
         html.Div([dcc.Loading(type='circle',
                               children=[
@@ -80,14 +97,16 @@ app.layout = html.Div([body])
      dash.dependencies.Output('t_infectious_slider_value', 'children')],
     [dash.dependencies.Input('t_infectious_slider', 'value'),
      dash.dependencies.Input('area_type_dropdown', 'value'),
+     dash.dependencies.Input('smooth_toggle', 'value'),
     ])
-def update_coronavirus_plot(t_inf, area_type):
+def update_coronavirus_plot(t_inf, area_type, smooth):
     # Convert MatPlotLib figure encoded as PNG image. More clunky than using
     # plotly Graphs but I want to see how well it works as I have many complex
     # maplotlib visualisations in existing projects which I want to use.
     fig=coronavirus.Plot(data,
                          area_type=area_type,
-                         t_infectious=t_inf # Days for which a patient is infectious
+                         t_infectious=t_inf, # Days for which a patient is infectious,
+                         smooth=smooth,
     )
     return utils.fig_to_uri(fig, tight_layout=True, dpi=64), "Assume people are infectious for {} days".format(t_inf)
 
