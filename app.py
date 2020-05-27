@@ -69,20 +69,23 @@ smooth_tool=html.Div(
 
 body = html.Div(
     [
-        html.H1('Coronavirus Statistics'),
+        html.H1('Coronavirus Statistics', style={'text-shadow': '1px 1px 4px #333377'}),
         html.Div([area_type_tool,
                   smooth_tool,
                   t_inf_tool,
         ],
                  className="row",
                  style={'background': colours['toolbg'],
-                        'padding': '1em'}),
+                        'padding': '1em',
+                        'margin-bottom': '1em', 'border-radius': '4px',
+                        'box-shadow': '1px 1px 4px #333377'}),
         html.Div([dcc.Loading(type='circle',
                               children=[
                                   html.Div(id='coronavirus_plot_div', children=[html.Img(id='coronavirus_plot_img', src='')]),
                               ]),
         ],
-                 className='six columns',
+                 className='twelve columns',
+                 style={'text-align': 'center'},
         ),
     ],
 )
