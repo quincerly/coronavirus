@@ -5,9 +5,9 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_daq as daq
 from dash.dependencies import Input, Output
+import plotly.graph_objects as go
 
 import coronavirus
-import utils
 
 nbsp='\u00a0'
 
@@ -16,7 +16,7 @@ data=coronavirus.Data('https://coronavirus.data.gov.uk/downloads/csv/coronavirus
 colours = {
     'background': 'white',
     'text': 'black',
-    'toolbg': '#eeeeff',
+    'toolbg': '#e6edf6',
 }
 
 external_stylesheets = [
@@ -79,13 +79,15 @@ body = html.Div(
                         'padding': '1em',
                         'margin-bottom': '1em', 'border-radius': '4px',
                         'box-shadow': '1px 1px 4px #333377'}),
-        html.Div([dcc.Loading(type='circle',
-                              children=[
-                                  html.Div(id='coronavirus_plot_div', children=[html.Img(id='coronavirus_plot_img', src='')]),
-                              ]),
-        ],
+        html.Div([dcc.Loading(type='circle', children=[
+            dcc.Graph(id='coronavirus_plot_graph_D'),
+        ])],
                  className='twelve columns',
-                 style={'text-align': 'center'},
+        ),
+        html.Div([dcc.Loading(type='circle', children=[
+            dcc.Graph(id='coronavirus_plot_graph_R'),
+        ])],
+                 className='twelve columns',
         ),
     ],
 )
@@ -93,22 +95,35 @@ body = html.Div(
 app.layout = html.Div([body])
 
 @app.callback(
-    [dash.dependencies.Output('coronavirus_plot_img', 'src'),
+    [dash.dependencies.Output('coronavirus_plot_graph_D', 'figure'),
+     dash.dependencies.Output('coronavirus_plot_graph_R', 'figure'),
      dash.dependencies.Output('t_infectious_slider_value', 'children')],
     [dash.dependencies.Input('t_infectious_slider', 'value'),
      dash.dependencies.Input('area_type_dropdown', 'value'),
      dash.dependencies.Input('smooth_toggle', 'value'),
     ])
-def update_coronavirus_plot(t_inf, area_type, smooth):
-    # Convert MatPlotLib figure encoded as PNG image. More clunky than using
-    # plotly Graphs but I want to see how well it works as I have many complex
-    # maplotlib visualisations in existing projects which I want to use.
-    fig=coronavirus.Plot(data,
-                         area_type=area_type,
-                         t_infectious=t_inf, # Days for which a patient is infectious,
-                         smooth=smooth,
+def update_coronavirus_plot(t_infectious, area_type, smooth):
+    Dfig=go.Figure()
+    Dfig.update_layout(
+        xaxis_title="Date",
+        yaxis_title="Daily cases",
+        margin=dict(l=20, r=20, t=30, b=20),
+        height=350,
     )
-    return utils.fig_to_uri(fig, tight_layout=True, dpi=64), "Assume people are infectious for {} days".format(t_inf)
+    Rfig=go.Figure()
+    Rfig.update_layout(
+        xaxis_title="Date",
+        yaxis_title="R value",
+        margin=dict(l=20, r=20, t=30, b=20),
+        height=350,
+    )
+    for area in data.listAreas(area_type):
+        curve=data.getCurveForArea(area, smooth=smooth)
+        n_infectious=coronavirus.NInfectious(curve, t_infectious)
+        R=curve['daily']*t_infectious/n_infectious
+        Dfig.add_trace(go.Scatter(x=curve['datetime'], y=curve['daily'], name=area))
+        Rfig.add_trace(go.Scatter(x=curve['datetime'], y=R, name=area))
+    return Dfig, Rfig, "Assume people are infectious for {} days".format(t_infectious)
 
 if __name__ == '__main__':
     app.run_server()
