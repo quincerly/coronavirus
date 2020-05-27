@@ -76,6 +76,7 @@ def Plot(data, area_type, t_infectious, smooth):
         daterange=[np.nanmin([daterange[0], curve['datenum'].min()]),
                    np.nanmax([daterange[0], curve['datenum'].max()]),
         ]
+    Dax.plot(daterange, [0, 0], ls=':', color='black')
     Rax.plot(daterange, [1, 1], ls=':', color='black')
     Dax.set_xlim(daterange)
     Dax.legend()
