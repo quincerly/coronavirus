@@ -12,6 +12,7 @@ import datetime
 
 class Data:
     def __init__(self, url):
+        self.url=url
         csv_content=requests.get(url).content.decode('utf-8')
         self.data=pd.read_csv(io.StringIO(csv_content),
                                quotechar='"', skipinitialspace=True)

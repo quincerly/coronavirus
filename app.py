@@ -89,6 +89,7 @@ body = html.Div(
         ])],
                  className='twelve columns',
         ),
+        'Data from: ', html.A(data.url, href=data.url),
     ],
 )
 
