@@ -108,14 +108,14 @@ def update_coronavirus_plot(t_infectious, area_type, smooth):
     Dfig.update_layout(
         xaxis_title="Date",
         yaxis_title="Daily cases",
-        margin=dict(l=20, r=20, t=30, b=20),
+        margin=dict(l=80, r=30, t=30, b=20),
         height=350,
     )
     Rfig=go.Figure()
     Rfig.update_layout(
         xaxis_title="Date",
         yaxis_title="R value",
-        margin=dict(l=20, r=20, t=30, b=20),
+        margin=dict(l=80, r=30, t=30, b=20),
         height=350,
     )
     for area in data.listAreas(area_type):
