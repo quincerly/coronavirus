@@ -21,9 +21,9 @@ class Data:
         self.area_types=self.data['Area type'].to_numpy()
 
     def listAreas(self, area_type):
-        return set(self.area_names[np.where(self.area_types == area_type)])
+        return sorted(set(self.area_names[np.where(self.area_types == area_type)]))
     def listAreaTypes(self):
-        return list(set(self.area_types))
+        return sorted(list(set(self.area_types)))
     def getCurveForArea(self, area_name, smooth=False):
         warea=np.where(self.area_names == area_name)
         date64=pd.to_datetime(self.data['Specimen date']).to_numpy()[warea]
