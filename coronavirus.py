@@ -20,6 +20,7 @@ class Data:
         #self.data=pd.read_csv(url, quotechar='"', skipinitialspace=True)
         self.area_names=self.data['Area name'].to_numpy()
         self.area_types=self.data['Area type'].to_numpy()
+        self.swindow=[-7, 0] # Smoothing window extent (days)
 
     def listAreas(self, area_type):
         return sorted(set(self.area_names[np.where(self.area_types == area_type)]))
@@ -33,8 +34,9 @@ class Data:
         daily=self.data['Daily lab-confirmed cases'].to_numpy()[warea]
         cumulative=self.data['Cumulative lab-confirmed cases'].to_numpy()[warea]
         if smooth:
-            daily=Smooth(datenum, daily, 7)
-            cumulative=Smooth(datenum, cumulative, 7)
+            #w=[-3.5, 3.5] # Smoothing window extent (days)
+            daily=Smooth(datenum, daily, self.swindow)
+            cumulative=Smooth(datenum, cumulative, self.swindow)
         return {
             'datetime': date,
             'datetime64': date64,
@@ -46,7 +48,7 @@ class Data:
 def Smooth(t, y, w):
     ys=[]
     for thist in t:
-        ys.append(y[np.where((t >= thist-w/2) & (t <= thist+w/2))].mean())
+        ys.append(y[np.where((t > thist+w[0]) & (t <= thist+w[1]))].mean())
     return np.array(ys)
 
 def NInfectious(curve, t_infectious):

@@ -56,10 +56,10 @@ t_inf_tool=html.Div(
 )
 smooth_tool=html.Div(
     [
-        html.Label('Smoothing'),
+        html.Label('Smoothing {} to {} days'.format(data.swindow[0], data.swindow[1])),
         html.Div([daq.ToggleSwitch(
             id='smooth_toggle',
-            value=False,
+            value=True,
             label=['Off', 'On'],
         )],
         ),
