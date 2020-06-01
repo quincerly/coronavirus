@@ -66,19 +66,25 @@ smooth_tool=html.Div(
     ],
     className="three columns",
 )
-
-body = html.Div(
-    [
-        html.H1('Coronavirus Statistics', style={'text-shadow': '1px 1px 4px #333377'}),
-        html.Div([area_type_tool,
+toolbar=html.Div([area_type_tool,
                   smooth_tool,
-                  t_inf_tool,
-        ],
+                  t_inf_tool],
                  className="row",
                  style={'background': colours['toolbg'],
                         'padding': '1em',
                         'margin-bottom': '1em', 'border-radius': '4px',
-                        'box-shadow': '1px 1px 4px #333377'}),
+                        'box-shadow': '1px 1px 4px #333377'})
+
+titlebar=html.Div([
+    html.H1('Coronavirus Statistics',
+            style={'float': 'left', 'text-shadow': '1px 1px 4px #333377'}),
+],
+                  className='row')
+
+body = html.Div(
+    [
+        titlebar,
+        toolbar,
         html.Div([dcc.Loading(type='circle', children=[
             dcc.Graph(id='coronavirus_plot_graph_D'),
         ])],
