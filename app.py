@@ -101,6 +101,24 @@ body = html.Div(
 
 app.layout = html.Div([body])
 
+def ploterr(fig, x, y, yerr, name, colour, errcolour):
+    xe=x+x[::-1]
+    yupper=(y+yerr).tolist()
+    ylower=(y-yerr).tolist()
+    ye=yupper+ylower[::-1]
+    fig.add_trace(go.Scatter(x=x, y=y,
+                             legendgroup=name,
+                             name=name,
+                             line=dict(color=colour),
+    ))
+    fig.add_trace(go.Scatter(x=xe, y=ye,
+                             legendgroup=name,
+                             name=name+" error",
+                             fill='tozeroy',
+                             fillcolor=errcolour, opacity=0.2,
+                             line=dict(color='rgba(255,255,255,0)')
+    ))
+
 @app.callback(
     [dash.dependencies.Output('coronavirus_plot_graph_D', 'figure'),
      dash.dependencies.Output('coronavirus_plot_graph_R', 'figure'),
@@ -116,6 +134,7 @@ def update_coronavirus_plot(t_infectious, area_type, smooth):
         yaxis_title="Daily cases",
         margin=dict(l=80, r=30, t=30, b=20),
         height=350,
+        legend=dict(font=dict(size=8)),
     )
     Rfig=go.Figure()
     Rfig.update_layout(
@@ -123,13 +142,45 @@ def update_coronavirus_plot(t_infectious, area_type, smooth):
         yaxis_title="R value",
         margin=dict(l=80, r=30, t=30, b=20),
         height=350,
+        legend=dict(font=dict(size=8)),
     )
-    for area in data.listAreas(area_type):
+    colours=[
+        '#1f77b4',  # muted blue
+        '#ff7f0e',  # safety orange
+        '#2ca02c',  # cooked asparagus green
+        '#d62728',  # brick red
+        '#9467bd',  # muted purple
+        '#8c564b',  # chestnut brown
+        '#e377c2',  # raspberry yogurt pink
+        '#7f7f7f',  # middle gray
+        '#bcbd22',  # curry yellow-green
+        '#17becf'   # blue-teal
+    ]
+    def hex_to_rgb(h):
+        return tuple(int(h.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+    def rgbacolour(h, opacity=1):
+        return "rgba({:d},{:d},{:d},{:f})".format(*(list(hex_to_rgb(h))+[opacity]))
+    areas=data.listAreas(area_type)
+    for area in areas:
+        colour=colours[areas.index(area) % len(areas)]
         curve=data.getCurveForArea(area, smooth=smooth)
         n_infectious=coronavirus.NInfectious(curve, t_infectious)
         R=curve['daily']*t_infectious/n_infectious
-        Dfig.add_trace(go.Scatter(x=curve['datetime'], y=curve['daily'], name=area))
-        Rfig.add_trace(go.Scatter(x=curve['datetime'], y=R, name=area))
+        sig_curve_daily=curve['daily']**0.5
+        sig_n_infectious=n_infectious**0.5
+        sig_R=t_infectious/n_infectious*(sig_curve_daily**2+curve['daily']**2/n_infectious**2*sig_n_infectious**2)
+        ploterr(fig=Dfig,
+                x=curve['datetime'], y=curve['daily'], yerr=sig_curve_daily,
+                name=area,
+                colour=rgbacolour(colour),
+                errcolour=rgbacolour(colour, 0.5))
+        ploterr(Rfig,
+                x=curve['datetime'],
+                y=R,
+                yerr=sig_R,
+                name=area,
+                colour=rgbacolour(colour),
+                errcolour=rgbacolour(colour, 0.5))
     return Dfig, Rfig, "Assume people are infectious for {} days".format(t_infectious)
 
 if __name__ == '__main__':
