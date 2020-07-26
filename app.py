@@ -164,13 +164,9 @@ def update_coronavirus_plot(t_infectious, area_type, smooth):
     for area in areas:
         colour=colours[areas.index(area) % len(areas)]
         curve=data.getCurveForArea(area, smooth=smooth)
-        n_infectious=coronavirus.NInfectious(curve, t_infectious)
-        R=curve['daily']*t_infectious/n_infectious
-        sig_curve_daily=curve['daily']**0.5
-        sig_n_infectious=n_infectious**0.5
-        sig_R=t_infectious/n_infectious*(sig_curve_daily**2+curve['daily']**2/n_infectious**2*sig_n_infectious**2)
-        ploterr(fig=Dfig,
-                x=curve['datetime'], y=curve['daily'], yerr=sig_curve_daily,
+        R, sig_R=coronavirus.CalcR(curve, t_infectious)
+        ploterr(Dfig,
+                x=curve['datetime'], y=curve['daily'], yerr=curve['dailyerr'],
                 name=area,
                 colour=rgbacolour(colour),
                 errcolour=rgbacolour(colour, 0.5))

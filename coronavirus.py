@@ -32,27 +32,43 @@ class Data:
         date=[datetime.datetime.utcfromtimestamp(d.astype('O')/1e9) for d in date64]
         datenum=np.array(list(map(mdates.date2num, date64)))
         daily=self.data['Daily lab-confirmed cases'].to_numpy()[warea]
+        dailyerr=daily**0.5
         cumulative=self.data['Cumulative lab-confirmed cases'].to_numpy()[warea]
+        cumulativeerr=cumulative**0.5
         if smooth:
             #w=[-3.5, 3.5] # Smoothing window extent (days)
-            daily=Smooth(datenum, daily, self.swindow)
-            cumulative=Smooth(datenum, cumulative, self.swindow)
+            daily, dailyerr=Smooth(datenum, daily, dailyerr, self.swindow)
+            cumulative, cumulativeerr=Smooth(datenum, cumulative, cumulativeerr, self.swindow)
         return {
             'datetime': date,
             'datetime64': date64,
             'datenum': datenum,
             'daily': daily,
+            'dailyerr': dailyerr,
             'cumulative': cumulative,
+            'cumulativeerr': cumulativeerr,
         }
 
-def Smooth(t, y, w):
+def Smooth(t, y, yerr, w):
     ys=[]
+    yerrs=[]
     for thist in t:
-        ys.append(y[np.where((t > thist+w[0]) & (t <= thist+w[1]))].mean())
-    return np.array(ys)
+        ind=np.where((t > thist+w[0]) & (t <= thist+w[1]))
+        ys.append(y[ind].mean())
+        yerrs.append((yerr[ind]**2).sum()**0.5/len(ind[0]))
+    return np.array(ys), np.array(yerrs)
 
-def NInfectious(curve, t_infectious):
+def CalcNInfectious(curve, t_infectious):
     n_infectious=[]
+    n_infectious_err=[]
     for thisdate in curve['datenum']:
-        n_infectious.append(curve['daily'][np.where((curve['datenum'] >= thisdate-t_infectious) & (curve['datenum'] <= thisdate))].sum())
-    return np.array(n_infectious)
+        ind=np.where((curve['datenum'] >= thisdate-t_infectious) & (curve['datenum'] <= thisdate))
+        n_infectious.append(curve['daily'][ind].sum())
+        n_infectious_err.append((curve['dailyerr'][ind]**2).mean()**0.5)
+    return np.array(n_infectious), np.array(n_infectious_err)
+
+def CalcR(curve, t_infectious):
+    n_infectious, n_infectious_err=CalcNInfectious(curve, t_infectious)
+    R=curve['daily']*t_infectious/n_infectious
+    sig_R=t_infectious/n_infectious*(curve['dailyerr']**2+curve['daily']**2/n_infectious**2*n_infectious_err**2)
+    return R, sig_R
