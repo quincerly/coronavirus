@@ -101,7 +101,7 @@ body = html.Div(
 
 app.layout = html.Div([body])
 
-def ploterr(fig, x, y, yerr, name, colour, errcolour):
+def ploterr(fig, x, y, yerr, name, colour, errcolour, dash=None):
     xe=x+x[::-1]
     yupper=(y+yerr).tolist()
     ylower=(y-yerr).tolist()
@@ -109,7 +109,7 @@ def ploterr(fig, x, y, yerr, name, colour, errcolour):
     fig.add_trace(go.Scatter(x=x, y=y,
                              legendgroup=name,
                              name=name,
-                             line=dict(color=colour),
+                             line=dict(color=colour, dash=dash),
     ))
     fig.add_trace(go.Scatter(x=xe, y=ye,
                              legendgroup=name,
