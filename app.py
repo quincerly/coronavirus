@@ -32,6 +32,7 @@ area_type_tool=html.Div(
         dcc.Dropdown(id='area_type_dropdown',
                      options=[{'label': t, 'value': t} for t in ['Nation', 'Region']],
                      value='Nation',
+                     persistence=True,
                      clearable=False)
     ],
     className="three columns",
@@ -50,6 +51,7 @@ t_inf_tool=html.Div(
                                21: '21{}days'.format(nbsp),
                            },
                            value=7,
+                           persistence=True,
                 )])
     ],
     className="six columns",
@@ -61,6 +63,7 @@ smooth_tool=html.Div(
             id='smooth_toggle',
             value=True,
             label=['Off', 'On'],
+            persistence=True,
         )],
         ),
     ],
