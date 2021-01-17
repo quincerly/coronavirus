@@ -10,6 +10,21 @@ import requests
 import io
 import datetime
 
+def Divide(a_aerr, b_berr):
+    a, aerr=a_aerr
+    b, berr=b_berr
+    return a/b, np.sqrt(aerr**2+a**2/b**2*berr**2)/b
+
+def Smooth(t, y_yerr, w):
+    y, yerr=y_yerr
+    ys=[]
+    yerrs=[]
+    for thist in t:
+        ind=np.where((t > thist+w[0]) & (t <= thist+w[1]))
+        ys.append(y[ind].mean())
+        yerrs.append((yerr[ind]**2).sum()**0.5/len(ind[0]))
+    return np.array(ys), np.array(yerrs)
+
 class Data:
     def __init__(self, url):
         self.url=url
@@ -20,7 +35,8 @@ class Data:
         #self.data=pd.read_csv(url, quotechar='"', skipinitialspace=True)
         self.area_names=self.data['Area name'].to_numpy()
         self.area_types=self.data['Area type'].to_numpy()
-        self.swindow=[-7, 0] # Smoothing window extent (days)
+        #self.swindow=[-7, 0] # Smoothing window extent (days)
+        self.swindow=[-3.5, 3.5] # Smoothing window extent (days)
 
     def listAreas(self, area_type):
         return sorted(set(self.area_names[np.where(self.area_types == area_type)]))
@@ -30,33 +46,43 @@ class Data:
         warea=np.where(self.area_names == area_name)
         date64=pd.to_datetime(self.data['Specimen date']).to_numpy()[warea]
         date=[datetime.datetime.utcfromtimestamp(d.astype('O')/1e9) for d in date64]
+        weekday=np.array([this_date.weekday() for this_date in date])
         datenum=np.array(list(map(mdates.date2num, date64)))
         daily=self.data['Daily lab-confirmed cases'].to_numpy()[warea]
         dailyerr=daily**0.5
         cumulative=self.data['Cumulative lab-confirmed cases'].to_numpy()[warea]
         cumulativeerr=cumulative**0.5
+        weeklyfac, weeklyfacerr=CalcWeeklyFac(daily, dailyerr, datenum, weekday)
+        dailycorr, dailycorrerr=Divide((daily, dailyerr), (weeklyfac, weeklyfacerr))
         if smooth:
             #w=[-3.5, 3.5] # Smoothing window extent (days)
-            daily, dailyerr=Smooth(datenum, daily, dailyerr, self.swindow)
-            cumulative, cumulativeerr=Smooth(datenum, cumulative, cumulativeerr, self.swindow)
+            daily, dailyerr=Smooth(datenum, (daily, dailyerr), self.swindow)
+            cumulative, cumulativeerr=Smooth(datenum, (cumulative, cumulativeerr), self.swindow)
         return {
             'datetime': date,
             'datetime64': date64,
             'datenum': datenum,
+            'dailycorr': dailycorr,
+            'dailycorrerr': dailycorrerr,
             'daily': daily,
             'dailyerr': dailyerr,
             'cumulative': cumulative,
             'cumulativeerr': cumulativeerr,
         }
 
-def Smooth(t, y, yerr, w):
-    ys=[]
-    yerrs=[]
-    for thist in t:
-        ind=np.where((t > thist+w[0]) & (t <= thist+w[1]))
-        ys.append(y[ind].mean())
-        yerrs.append((yerr[ind]**2).sum()**0.5/len(ind[0]))
-    return np.array(ys), np.array(yerrs)
+def CalcWeeklyFac(daily, dailyerr, datenum, weekday):
+    weekday_total=np.zeros(7)
+    for this_weekday in range(7):
+        this_weekday_ind=np.where(weekday==this_weekday)
+        weekday_total[this_weekday]=np.nansum(daily[this_weekday_ind])
+    w, we=Divide((weekday_total, np.sqrt(weekday_total)), (weekday_total.sum(), np.sqrt(weekday_total.sum())))
+    weeklyfac=np.zeros_like(daily, dtype='float')
+    weeklyfacerr=np.zeros_like(daily, dtype='float')
+    for this_weekday in range(7):
+        this_weekday_ind=np.where(weekday==this_weekday)
+        weeklyfac[this_weekday_ind]=7*w[this_weekday]
+        weeklyfacerr[this_weekday_ind]=7*we[this_weekday]
+    return weeklyfac, weeklyfacerr
 
 def CalcNInfectious(curve, t_infectious):
     n_infectious=[]
@@ -67,8 +93,7 @@ def CalcNInfectious(curve, t_infectious):
         n_infectious_err.append((curve['dailyerr'][ind]**2).mean()**0.5)
     return np.array(n_infectious), np.array(n_infectious_err)
 
-def CalcR(curve, t_infectious):
-    n_infectious, n_infectious_err=CalcNInfectious(curve, t_infectious)
-    R=curve['daily']*t_infectious/n_infectious
-    sig_R=t_infectious/n_infectious*(curve['dailyerr']**2+curve['daily']**2/n_infectious**2*n_infectious_err**2)
-    return R, sig_R
+def CalcR(curve, t_infectious, corr=False):
+    daily, dailyerr=(curve['dailycorr'], curve['dailycorrerr']) if corr else (curve['daily'], curve['dailyerr'])
+    return Divide((daily*t_infectious, dailyerr*t_infectious),
+                  CalcNInfectious(curve, t_infectious))
