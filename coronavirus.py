@@ -53,7 +53,6 @@ class Data:
         cumulative=self.data['Cumulative lab-confirmed cases'].to_numpy()[warea]
         cumulativeerr=cumulative**0.5
         weeklyfac, weeklyfacerr=CalcWeeklyFac(daily, dailyerr, datenum, weekday)
-        dailycorr, dailycorrerr=Divide((daily, dailyerr), (weeklyfac, weeklyfacerr))
         if smooth:
             #w=[-3.5, 3.5] # Smoothing window extent (days)
             daily, dailyerr=Smooth(datenum, (daily, dailyerr), self.swindow)
@@ -62,8 +61,6 @@ class Data:
             'datetime': date,
             'datetime64': date64,
             'datenum': datenum,
-            'dailycorr': dailycorr,
-            'dailycorrerr': dailycorrerr,
             'daily': daily,
             'dailyerr': dailyerr,
             'cumulative': cumulative,
@@ -93,7 +90,7 @@ def CalcNInfectious(curve, t_infectious):
         n_infectious_err.append((curve['dailyerr'][ind]**2).mean()**0.5)
     return np.array(n_infectious), np.array(n_infectious_err)
 
-def CalcR(curve, t_infectious, corr=False):
-    daily, dailyerr=(curve['dailycorr'], curve['dailycorrerr']) if corr else (curve['daily'], curve['dailyerr'])
+def CalcR(curve, t_infectious,):
+    daily, dailyerr=curve['daily'], curve['dailyerr']
     return Divide((daily*t_infectious, dailyerr*t_infectious),
                   CalcNInfectious(curve, t_infectious))
