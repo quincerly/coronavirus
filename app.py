@@ -7,6 +7,7 @@ import dash_bootstrap_components as dbc
 import dash_daq as daq
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
+import numpy as np
 
 import coronavirus
 
@@ -85,7 +86,7 @@ def area_tabs():
     for area_type, area_list_id in zip(_area_types, _area_list_ids):
         tabs.append(dcc.Tab(label=_area_type_labels.get(area_type.lower(), area_type), children=[
             dcc.Checklist(options=[{'label': area_name,
-                                    'value': area_name} for area_name in data.listAreas(area_type)],
+                                    'value': (area_type, area_name)} for area_name in data.listAreas(area_type)],
                           value=[],
                           id=area_list_id,
                           style={'overflow-y':'scroll', 'height': '100px'},
@@ -128,7 +129,6 @@ def ploterr(fig, x, y, yerr, name, colour, errcolour, dash=None):
     yupper=(y+yerr).tolist()
     ylower=(y-yerr).tolist()
     ye=yupper+ylower[::-1]
-    print(x[:2], x[-2:])
     fig.add_trace(go.Scatter(x=x, y=y,
                              legendgroup=name,
                              name=name,
@@ -184,19 +184,20 @@ def update_coronavirus_plot(t_infectious, smooth, *area_lists):
         return "rgba({:d},{:d},{:d},{:f})".format(*(list(hex_to_rgb(h))+[opacity]))
     areas=sum(area_lists, [])
     for index, area in enumerate(areas):
+        area_type, area_name=area
         colour=colours[index % len(colours)]
-        curve=data.getCurveForArea(area, smooth=smooth)
+        curve=data.getCurveForArea(area_type, area_name, smooth=smooth)
         R, sig_R=coronavirus.CalcR(curve, t_infectious)
         ploterr(Dfig,
                 x=curve['datetime'], y=curve['daily'], yerr=curve['dailyerr'],
-                name=area,
+                name=area_name,
                 colour=rgbacolour(colour),
                 errcolour=rgbacolour(colour, 0.5))
         ploterr(Rfig,
                 x=curve['datetime'],
                 y=R,
                 yerr=sig_R,
-                name=area,
+                name=area_name,
                 colour=rgbacolour(colour),
                 errcolour=rgbacolour(colour, 0.5))
     return Dfig, Rfig, "Assume people are infectious for {} days".format(t_infectious)
