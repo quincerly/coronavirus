@@ -85,16 +85,17 @@ def area_tabs():
     tabs=[]
     for area_type, area_list_id in zip(_area_types, _area_list_ids):
         tabs.append(dcc.Tab(label=_area_type_labels.get(area_type.lower(), area_type), children=[
-            dcc.Checklist(options=[{'label': area_name,
-                                    'value': (area_type, area_name)} for area_name in data.listAreas(area_type)],
-                          value=[],
-                          id=area_list_id,
-                          style={'overflow-y':'scroll', 'height': '100px'},
-                          persistence=True),
-            ],
+                dcc.Dropdown(options=[{'label': area_name,
+                                       'value': area_type+":"+area_name} for area_name in data.listAreas(area_type)],
+                             value=[],
+                             id=area_list_id,
+                             multi=True,
+                             persistence=True),
+        ],
                             style={}))
     return dcc.Tabs(tabs,
                     style={})
+
 areabar=html.Div(
     area_tabs(),
     id='areabar',
@@ -184,7 +185,7 @@ def update_coronavirus_plot(t_infectious, smooth, *area_lists):
         return "rgba({:d},{:d},{:d},{:f})".format(*(list(hex_to_rgb(h))+[opacity]))
     areas=sum(area_lists, [])
     for index, area in enumerate(areas):
-        area_type, area_name=area
+        area_type, area_name=area.split(":")
         colour=colours[index % len(colours)]
         curve=data.getCurveForArea(area_type, area_name, smooth=smooth)
         R, sig_R=coronavirus.CalcR(curve, t_infectious)
