@@ -60,19 +60,15 @@ smooth_tool=html.Div(
     ],
     className="three columns",
 )
-toolbar=html.Div([smooth_tool,
-                  t_inf_tool],
-                 className="row",
-                 style={'background': colours['toolbg'],
-                        'padding': '1em',
-                        'margin-bottom': '1em', 'border-radius': '4px',
-                        'box-shadow': '1px 1px 4px #333377'})
 
 titlebar=html.Div([
-    html.H1('Coronavirus Statistics',
-            style={'float': 'left', 'text-shadow': '1px 1px 4px #333377'}),
+    html.Img(src=app.get_asset_url('favicon.ico'), style={'float': 'right', 'height': '50px', 'vertical-align': 'middle'}),
+    html.H1(nbsp+'Coronavirus Statistics',
+            style={'float': 'left',
+                   'text-shadow': '1px 1px 4px #333377'}),
 ],
-                  className='row')
+                  className='row',
+)
 
 _area_types=data.listAreaTypes()
 _area_list_ids=['area_list_'+area_type for area_type in _area_types]
@@ -96,11 +92,22 @@ def area_tabs():
     return dcc.Tabs(tabs,
                     style={})
 
-areabar=html.Div(
-    area_tabs(),
-    id='areabar',
+calctools=html.Div([smooth_tool,
+                 t_inf_tool],
+                className="row",
+                style={'background': colours['background'],
+                       'padding': '1em',
+                       'margin-top': '0.5em',
+                       'border-radius': '4px',
+                       'border': 'solid 1px #ccc',
+                }
+)
+
+
+toolbar=html.Div(
+    [area_tabs(), calctools],
     style={'background': colours['toolbg'],
-           'padding': '1em',
+           'padding': '0.5em',
            'margin-bottom': '1em', 'border-radius': '4px',
            'box-shadow': '1px 1px 4px #333377'})
 
@@ -108,7 +115,6 @@ body = html.Div(
     [
         titlebar,
         toolbar,
-        areabar,
         html.Div([dcc.Loading(type='circle', children=[
             dcc.Graph(id='coronavirus_plot_graph_D'),
         ])],
